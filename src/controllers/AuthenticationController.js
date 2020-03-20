@@ -108,5 +108,45 @@ module.exports = {
         // return response.json({message: 'login'});
         // return response.head('auth-token', token).json({message: 'logged in'});
         return response.append('auth-token', token).send(token);
+    },
+
+    async check(request, response) {
+        const token = request.get('auth-token');
+
+        if (!token) {
+            return response.status(401)
+                .json({
+                    valid: false,
+                    message: 'No token provided'
+                });
+        }
+
+        try {
+            let decoded = jwt.verify(token, process.env.TOKEN_SECRET);
+            let user = User.findOne({ 
+                _id: decoded._id
+             });
+
+             if (user) {
+                 return response.json({
+                     valid: true,
+                     message: 'Authorized'
+                 });
+             }
+             else {
+                 return response.json({
+                     valid: false,
+                     message: 'Unauthorized'
+                 });
+             }
+        }
+        catch (error) {
+            console.log('Erro:', error);
+        }
+
+        return response.status(404).json({
+            valid: false,
+            message: 'Invalid token'
+        });
     }
 };
